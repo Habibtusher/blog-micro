@@ -10,5 +10,5 @@ router.get('/',BlogController.getAllFromDB)
 router.get('/:id',BlogController.getByID)
 router.delete('/:id',auth(),BlogController.deleteBlog)
 router.patch('/update/:id',auth(),BlogController.updateBlog)
-router.post('/create-blog',BlogController.insertIntoDB)
+router.post('/create-blog',auth(), BlogController.insertIntoDB)
 export const BlogRoutes = router

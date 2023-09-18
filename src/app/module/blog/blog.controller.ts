@@ -7,7 +7,7 @@ import { BlogFilterableFields } from './blog.constant';
 import { BlogService } from './blog.service';
 
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
-  const result = await BlogService.insertIntoDB(req.body);
+  const result = await BlogService.insertIntoDB(req?.user?.userId,req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -29,10 +29,10 @@ const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const getByID = catchAsync(async (req: Request, res: Response) => {
+  console.log("hit me");
   const { id } = req.params;
   const result = await BlogService.getByID(id);
-  console.log('🚀 ~ file: blog.controller.ts:34 ~ getByID ~ result:', result);
-
+ 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -42,12 +42,13 @@ const getByID = catchAsync(async (req: Request, res: Response) => {
 });
 const updateBlog = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+  
   const result = await BlogService.updateBlog(req?.user?.userId, id, req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: `Blog deleted successfully`,
+    message: `Blog updated successfully`,
     data: result,
   });
 });
@@ -58,7 +59,7 @@ const deleteBlog = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: `Blog updated successfully`,
+    message: `Blog deleted successfully`,
     data: result,
   });
 });

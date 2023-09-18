@@ -4,16 +4,33 @@ import ApiError from '../../../errors/ApiError';
 import { paginationHelpers } from '../../../helpers/paginationHelper';
 import { IPaginationOptions } from '../../../interfaces/pagination';
 import prisma from '../../../shared/prisma';
+import { RedisClient } from '../../../shared/redis';
 import {
-    BlogRelationalFields,
-    BlogRelationalFieldsMapper,
-    BlogSearchableFields,
+  BlogRelationalFields,
+  BlogRelationalFieldsMapper,
+  BlogSearchableFields,
 } from './blog.constant';
 
-const insertIntoDB = async (data: Blog): Promise<Blog> => {
+const insertIntoDB = async (userId: string, data: Blog): Promise<Blog> => {
+  const user = await prisma.user.findFirst({
+    where: {
+      userId: userId,
+    },
+  });
+ 
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'user not found');
+  }
+  data.authorId = user?.id;
   const result = await prisma.blog.create({
     data,
+    include: {
+      author: true,
+    },
   });
+  if (result) {
+    await RedisClient.publish('blog.created', JSON.stringify(result));
+  }
   return result;
 };
 const getAllFromDB = async (filters: any, options: IPaginationOptions) => {
@@ -99,9 +116,9 @@ const updateBlog = async (
     where: {
       id,
     },
-    include:{
-        author:true
-    }
+    include: {
+      author: true,
+    },
   });
 
   if (findPost?.author.userId !== userId) {
@@ -115,20 +132,20 @@ const updateBlog = async (
       id,
     },
     data: payload,
+    include:{
+      author:true
+    }
   });
   return result;
 };
-const deleteBlog = async (
-  userId: string,
-  id: string,
-): Promise<Blog | null> => {
+const deleteBlog = async (userId: string, id: string): Promise<Blog | null> => {
   const findPost = await prisma.blog.findUnique({
     where: {
       id,
     },
-    include:{
-        author:true
-    }
+    include: {
+      author: true,
+    },
   });
 
   if (findPost?.author.userId !== userId) {
@@ -141,7 +158,6 @@ const deleteBlog = async (
     where: {
       id,
     },
-   
   });
   return result;
 };
@@ -150,5 +166,5 @@ export const BlogService = {
   getAllFromDB,
   getByID,
   updateBlog,
-  deleteBlog
+  deleteBlog,
 };

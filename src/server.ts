@@ -1,15 +1,18 @@
 import { Server } from 'http';
 import app from './app';
+import subscribeToEvents from './app/events';
 import config from './config';
+import { RedisClient } from './shared/redis';
 
 async function bootstrap() {
-
+  await RedisClient.connect().then(() => {
+    subscribeToEvents();
+  });
   const server: Server = app.listen(config.port, () => {
-    console.log(`Server running on port ${config.port}`);
+    console.log(`Blog Server running on port ${config.port}`);
   });
 
   const exitHandler = () => {
-
     if (server) {
       server.close(() => {
         console.log('Server closed');
@@ -19,7 +22,7 @@ async function bootstrap() {
   };
 
   const unexpectedErrorHandler = (error: unknown) => {
-    console.log("un",error);
+    console.log('un', error);
     exitHandler();
   };
 
